@@ -1,0 +1,52 @@
+#
+#  Copyright (c) 2013-2014, ARM Limited. All rights reserved.
+#
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution.  The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = LcbPkg
+  PACKAGE_GUID                   = 9b76639a-834d-46a6-b694-eeeb9575ce4a
+  PACKAGE_VERSION                = 0.1
+
+################################################################################
+#
+# Include Section - list of Include Paths that are provided by this package.
+#                   Comments are used for Keywords and Module Types.
+#
+# Supported Module Types:
+#  BASE SEC PEI_CORE PEIM DXE_CORE DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SMM_DRIVER DXE_SAL_DRIVER UEFI_DRIVER UEFI_APPLICATION
+#
+################################################################################
+[Includes.common]
+  Include                        # Root include for the package
+
+[Guids.common]
+  gArmJunoTokenSpaceGuid    =  { 0x9b76639a, 0x834d, 0x46a6, { 0xb6, 0x94, 0xee, 0xeb, 0x95, 0x75, 0xce, 0x4a } }
+
+[PcdsFixedAtBuild.common]
+  # Size of the region used by UEFI in permanent memory (Reserved 128MB by default)
+  gArmPlatformTokenSpaceGuid.PcdSystemMemoryUefiRegionSize|0x08000000|UINT32|0x00000001
+
+  # Stack for CPU Cores in Non Secure Mode
+  gArmPlatformTokenSpaceGuid.PcdCPUCoresStackBase|0|UINT32|0x00000002
+  gArmPlatformTokenSpaceGuid.PcdCPUCorePrimaryStackSize|0x10000|UINT32|0x00000003
+  gArmPlatformTokenSpaceGuid.PcdCPUCoreSecondaryStackSize|0x1000|UINT32|0x00000004
+
+  # Core Counts
+  gArmPlatformTokenSpaceGuid.PcdCoreCount|4|UINT32|0x00000005
+  gArmPlatformTokenSpaceGuid.PcdClusterCount|2|UINT32|0x00000006
+
+  gArmJunoTokenSpaceGuid.PcdGenericWatchdogControlBase|0x2A440000|UINT32|0x00000011
+  gArmJunoTokenSpaceGuid.PcdGenericWatchdogRefreshBase|0x2A450000|UINT32|0x00000012
+  gArmJunoTokenSpaceGuid.PcdGenericWatchdogEl2IntrNum|93|UINT32|0x00000013
+
+  gArmJunoTokenSpaceGuid.PcdSynopsysUsbOhciBaseAddress|0x7FFB0000|UINT32|0x00000014
+  gArmJunoTokenSpaceGuid.PcdSynopsysUsbEhciBaseAddress|0x7FFC0000|UINT32|0x00000015
