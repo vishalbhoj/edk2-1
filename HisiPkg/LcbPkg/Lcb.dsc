@@ -43,7 +43,7 @@
   TimerLib|ArmPkg/Library/ArmArchTimerLib/ArmArchTimerLib.inf
 
   # USB Requirements
-  UefiUsbLib|MdePkg/Library/UefiUsbLib/UefiUsbLib.inf
+#  UefiUsbLib|MdePkg/Library/UefiUsbLib/UefiUsbLib.inf
 
   UncachedMemoryAllocationLib|ArmPkg/Library/UncachedMemoryAllocationLib/UncachedMemoryAllocationLib.inf
 
@@ -224,11 +224,11 @@
   #
   # Usb Support
   #
-  MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf
-  MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
-  MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
-  MdeModulePkg/Bus/Usb/UsbMouseDxe/UsbMouseDxe.inf
-  MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
+#  MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf
+#  MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
+#  MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
+#  MdeModulePkg/Bus/Usb/UsbMouseDxe/UsbMouseDxe.inf
+#  MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 
   #
   # Juno platform driver

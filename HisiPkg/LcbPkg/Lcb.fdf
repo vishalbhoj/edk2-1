@@ -107,8 +107,8 @@ READ_LOCK_STATUS   = TRUE
   # Multiple Console IO support
   #
   INF MdeModulePkg/Universal/Console/ConPlatformDxe/ConPlatformDxe.inf
-  INF MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitterDxe.inf
-  INF MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
+#  INF MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitterDxe.inf
+#  INF MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
   INF MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
   INF EmbeddedPkg/SerialDxe/SerialDxe.inf
 
@@ -123,7 +123,7 @@ READ_LOCK_STATUS   = TRUE
   INF HisiPkg/Drivers/DWMmcDxe/DWMmcDxe.inf
 
   # Versatile Express FileSystem
-  INF ArmPlatformPkg/FileSystem/BootMonFs/BootMonFs.inf
+#  INF ArmPlatformPkg/FileSystem/BootMonFs/BootMonFs.inf
 
   #
   # FAT filesystem + GPT/MBR partitioning
@@ -134,32 +134,32 @@ READ_LOCK_STATUS   = TRUE
   INF MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
 
   # FV Filesystem^M
-  INF MdeModulePkg/Universal/FvSimpleFilesystemDxe/FvSimpleFilesystemDxe.inf
+#  INF MdeModulePkg/Universal/FvSimpleFilesystemDxe/FvSimpleFilesystemDxe.inf
 
   #
   # Usb Support
   #
-  INF MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf
-  INF MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
-  INF MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
-  INF MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
-  INF MdeModulePkg/Bus/Usb/UsbMouseDxe/UsbMouseDxe.inf
+#  INF MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf
+#  INF MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
+#  INF MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
+#  INF MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
+#  INF MdeModulePkg/Bus/Usb/UsbMouseDxe/UsbMouseDxe.inf
 
   #
   # Networking stack
   #
-  INF MdeModulePkg/Universal/Network/DpcDxe/DpcDxe.inf
-  INF MdeModulePkg/Universal/Network/ArpDxe/ArpDxe.inf
-  INF MdeModulePkg/Universal/Network/Dhcp4Dxe/Dhcp4Dxe.inf
-  INF MdeModulePkg/Universal/Network/Ip4ConfigDxe/Ip4ConfigDxe.inf
-  INF MdeModulePkg/Universal/Network/Ip4Dxe/Ip4Dxe.inf
-  INF MdeModulePkg/Universal/Network/MnpDxe/MnpDxe.inf
-  INF MdeModulePkg/Universal/Network/VlanConfigDxe/VlanConfigDxe.inf
-  INF MdeModulePkg/Universal/Network/Mtftp4Dxe/Mtftp4Dxe.inf
-  INF MdeModulePkg/Universal/Network/Tcp4Dxe/Tcp4Dxe.inf
-  INF MdeModulePkg/Universal/Network/Udp4Dxe/Udp4Dxe.inf
-  INF MdeModulePkg/Universal/Network/UefiPxeBcDxe/UefiPxeBcDxe.inf
-  INF MdeModulePkg/Universal/Network/IScsiDxe/IScsiDxe.inf
+#  INF MdeModulePkg/Universal/Network/DpcDxe/DpcDxe.inf
+#  INF MdeModulePkg/Universal/Network/ArpDxe/ArpDxe.inf
+#  INF MdeModulePkg/Universal/Network/Dhcp4Dxe/Dhcp4Dxe.inf
+#  INF MdeModulePkg/Universal/Network/Ip4ConfigDxe/Ip4ConfigDxe.inf
+#  INF MdeModulePkg/Universal/Network/Ip4Dxe/Ip4Dxe.inf
+#  INF MdeModulePkg/Universal/Network/MnpDxe/MnpDxe.inf
+#  INF MdeModulePkg/Universal/Network/VlanConfigDxe/VlanConfigDxe.inf
+#  INF MdeModulePkg/Universal/Network/Mtftp4Dxe/Mtftp4Dxe.inf
+#  INF MdeModulePkg/Universal/Network/Tcp4Dxe/Tcp4Dxe.inf
+#  INF MdeModulePkg/Universal/Network/Udp4Dxe/Udp4Dxe.inf
+#  INF MdeModulePkg/Universal/Network/UefiPxeBcDxe/UefiPxeBcDxe.inf
+#  INF MdeModulePkg/Universal/Network/IScsiDxe/IScsiDxe.inf
 
   #
   # UEFI applications
@@ -169,7 +169,7 @@ READ_LOCK_STATUS   = TRUE
   #
   # Juno platform driver
   #
-  INF ArmPlatformPkg/ArmJunoPkg/Drivers/ArmJunoDxe/ArmJunoDxe.inf
+#  INF ArmPlatformPkg/ArmJunoPkg/Drivers/ArmJunoDxe/ArmJunoDxe.inf
 
   #
   # Bds
