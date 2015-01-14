@@ -25,8 +25,8 @@
 ################################################################################
 
 [FD.BL33_AP_UEFI]
-BaseAddress   = 0x00400000|gArmTokenSpaceGuid.PcdFdBaseAddress  # The base address of the Firmware in NOR Flash.
-Size          = 0x000F0000|gArmTokenSpaceGuid.PcdFdSize         # The size in bytes of the FLASH Device
+BaseAddress   = 0x00400000|gArmTokenSpaceGuid.PcdFdBaseAddress  # The base address of the Firmware in DDR.
+Size          = 0x000F0000|gArmTokenSpaceGuid.PcdFdSize         # The size in bytes of the Firmware
 ErasePolarity = 1
 
 # This one is tricky, it must be: BlockSize * NumBlocks = Size
@@ -100,7 +100,6 @@ READ_LOCK_STATUS   = TRUE
   INF EmbeddedPkg/MetronomeDxe/MetronomeDxe.inf
 
   INF MdeModulePkg/Universal/Variable/EmuRuntimeDxe/EmuVariableRuntimeDxe.inf
-  INF MdeModulePkg/Universal/FaultTolerantWriteDxe/FaultTolerantWriteDxe.inf
 
   INF MdeModulePkg/Universal/HiiDatabaseDxe/HiiDatabaseDxe.inf
 
@@ -116,6 +115,12 @@ READ_LOCK_STATUS   = TRUE
   INF ArmPkg/Drivers/ArmGic/ArmGicDxe.inf
   INF ArmPkg/Drivers/TimerDxe/TimerDxe.inf
   INF ArmPlatformPkg/ArmJunoPkg/Drivers/GenericWatchdogDxe/GenericWatchdogDxe.inf
+
+  #
+  # Multimedia Card Interface
+  #
+  INF EmbeddedPkg/Universal/MmcDxe/MmcDxe.inf
+  INF HisiPkg/Drivers/DWMmcDxe/DWMmcDxe.inf
 
   # Versatile Express FileSystem
   INF ArmPlatformPkg/FileSystem/BootMonFs/BootMonFs.inf
