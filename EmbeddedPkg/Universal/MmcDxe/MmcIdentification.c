@@ -111,6 +111,12 @@ EmmcIdentificationMode (
 
   // Setup card type
   MmcHostInstance->CardInfo.CardType = EMMC_CARD;
+
+  // Return from data state to tran state
+  Status = Host->SendCommand (Host, MMC_CMD12, 0);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_ERROR, "EmmcIdentificationMode(): Stop error, Status=%r.\n", Status));
+  }
   return EFI_SUCCESS;
 }
 
