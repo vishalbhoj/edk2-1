@@ -37,6 +37,7 @@
   ArmPlatformSysConfigLib|ArmPlatformPkg/ArmVExpressPkg/Library/ArmVExpressSysConfigLib/ArmVExpressSysConfigLib.inf
 
   CacheMaintenanceLib|ArmPkg/Library/ArmCacheMaintenanceLib/ArmCacheMaintenanceLib.inf
+  DevicePathLib|MdePkg/Library/UefiDevicePathLib/UefiDevicePathLib.inf
   EfiResetSystemLib|ArmPkg/Library/ArmPsciResetSystemLib/ArmPsciResetSystemLib.inf
 
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
@@ -90,6 +91,36 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVersionString|L"PreAlpha"
   gEmbeddedTokenSpaceGuid.PcdEmbeddedPrompt|"Lcb"
 
+# DEBUG_ASSERT_ENABLED       0x01
+# DEBUG_PRINT_ENABLED        0x02
+# DEBUG_CODE_ENABLED         0x04
+# CLEAR_MEMORY_ENABLED       0x08
+# ASSERT_BREAKPOINT_ENABLED  0x10
+# ASSERT_DEADLOOP_ENABLED    0x20
+!if $(TARGET) == RELEASE
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x21
+!else
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x2f
+!endif
+
+#  DEBUG_INIT      0x00000001  // Initialization
+#  DEBUG_WARN      0x00000002  // Warnings
+#  DEBUG_LOAD      0x00000004  // Load events
+#  DEBUG_FS        0x00000008  // EFI File system
+#  DEBUG_POOL      0x00000010  // Alloc & Free's
+#  DEBUG_PAGE      0x00000020  // Alloc & Free's
+#  DEBUG_INFO      0x00000040  // Verbose
+#  DEBUG_DISPATCH  0x00000080  // PEI/DXE Dispatchers
+#  DEBUG_VARIABLE  0x00000100  // Variable
+#  DEBUG_BM        0x00000400  // Boot Manager
+#  DEBUG_BLKIO     0x00001000  // BlkIo Driver
+#  DEBUG_NET       0x00004000  // SNI Driver
+#  DEBUG_UNDI      0x00010000  // UNDI Driver
+#  DEBUG_LOADFILE  0x00020000  // UNDI Driver
+#  DEBUG_EVENT     0x00080000  // Event messages
+#  DEBUG_ERROR     0x80000000  // Error
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x8000000F
+
   # System Memory (1GB)
   gArmTokenSpaceGuid.PcdSystemMemoryBase|0x00000000
   gArmTokenSpaceGuid.PcdSystemMemorySize|0x40000000
@@ -120,14 +151,14 @@
   gArmTokenSpaceGuid.PcdGicInterruptInterfaceBase|0xF6802000
 
   # List of Device Paths that support BootMonFs
-  gArmPlatformTokenSpaceGuid.PcdBootMonFsSupportedDevicePaths|L"VenHw(B549F005-4BD4-4020-A0CB-06F42BDA68C3)"
+#  gArmPlatformTokenSpaceGuid.PcdBootMonFsSupportedDevicePaths|L"VenHw(B549F005-4BD4-4020-A0CB-06F42BDA68C3)"
 
   #
   # ARM OS Loader
   #
-  gArmPlatformTokenSpaceGuid.PcdDefaultBootDescription|L"Linux from DRAM"
-  gArmPlatformTokenSpaceGuid.PcdDefaultBootDevicePath|L"VenHw(B549F005-4BD4-4020-A0CB-06F42BDA68C3)/Image"
-  gArmPlatformTokenSpaceGuid.PcdFdtDevicePath|L"VenHw(B549F005-4BD4-4020-A0CB-06F42BDA68C3)/juno.dtb"
+  gArmPlatformTokenSpaceGuid.PcdDefaultBootDescription|L"Linux from eMMC"
+  gArmPlatformTokenSpaceGuid.PcdDefaultBootDevicePath|L"VenHw(B549F005-4BD4-4020-A0CB-06F42BDA68C3)/HD(27,GPT,F9F21F1B-A8D4-5F0E-9746-594869AEC34E,0xC0000,0xC000)/Image"
+  gArmPlatformTokenSpaceGuid.PcdFdtDevicePath|L"VenHw(B549F005-4BD4-4020-A0CB-06F42BDA68C3)/HD(27,GPT,F9F21F1B-A8D4-5F0E-9746-594869AEC34E,0xC0000,0xC000)/lcb.dtb"
   gArmPlatformTokenSpaceGuid.PcdDefaultBootArgument|"console=ttyAMA0,115200 earlyprintk=pl011,0xf8015000 root=/dev/sda1 rootwait verbose debug"
   gArmPlatformTokenSpaceGuid.PcdDefaultBootType|2
 
