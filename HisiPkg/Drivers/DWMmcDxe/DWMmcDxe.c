@@ -204,8 +204,8 @@ DWMmcNotifyState (
       Data = MmioRead32 (DWMMC_CTRL);
     } while (Data & DWMMC_CTRL_RESET_ALL);
 
-    // Setup clock that should be less than 400KHz.
-    Status = DWMmcSetClock (378000);
+    // Setup clock that could not be higher than 400KHz.
+    Status = DWMmcSetClock (400000);
     ASSERT (!EFI_ERROR (Status));
     MicroSecondDelay (100);
 
@@ -305,15 +305,16 @@ SendCommand (
     Data = MmioRead32 (DWMMC_STATUS);
   } while (Data & DWMMC_STS_DATA_BUSY);
 
-  MmioWrite32(DWMMC_RINTSTS, ~0);
-  MmioWrite32(DWMMC_CMDARG, Argument);
-  MmioWrite32(DWMMC_CMD, MmcCmd);
+  MmioWrite32 (DWMMC_RINTSTS, ~0);
+  MmioWrite32 (DWMMC_CMDARG, Argument);
+  MmioWrite32 (DWMMC_CMD, MmcCmd);
 
   ErrMask = DWMMC_INT_EBE | DWMMC_INT_HLE | DWMMC_INT_RTO |
             DWMMC_INT_RCRC | DWMMC_INT_RE;
   ErrMask |= DWMMC_INT_DCRC | DWMMC_INT_DRT | DWMMC_INT_SBE;
   do {
-    Data = MmioRead32(DWMMC_RINTSTS);
+    MicroSecondDelay(500);
+    Data = MmioRead32 (DWMMC_RINTSTS);
 
     if (Data & ErrMask)
       return EFI_DEVICE_ERROR;
@@ -366,6 +367,10 @@ DWMmcSendCommand (
   case MMC_INDX(12):
     Cmd = BIT_CMD_RESPONSE_EXPECT | BIT_CMD_CHECK_RESPONSE_CRC |
            BIT_CMD_STOP_ABORT_CMD;
+    break;
+  case MMC_INDX(13):
+    Cmd = BIT_CMD_RESPONSE_EXPECT | BIT_CMD_CHECK_RESPONSE_CRC |
+           BIT_CMD_WAIT_PRVDATA_COMPLETE;
     break;
   case MMC_INDX(17):
   case MMC_INDX(18):
