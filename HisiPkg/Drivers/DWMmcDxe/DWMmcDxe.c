@@ -422,10 +422,10 @@ DWMmcReceiveResponse (
   {
     Buffer[0] = MmioRead32 (DWMMC_RESP0);
   } else if (Type == MMC_RESPONSE_TYPE_R2) {
-    Buffer[0] = MmioRead32 (DWMMC_RESP3);
-    Buffer[1] = MmioRead32 (DWMMC_RESP2);
-    Buffer[2] = MmioRead32 (DWMMC_RESP1);
-    Buffer[3] = MmioRead32 (DWMMC_RESP0);
+    Buffer[0] = MmioRead32 (DWMMC_RESP0);
+    Buffer[1] = MmioRead32 (DWMMC_RESP1);
+    Buffer[2] = MmioRead32 (DWMMC_RESP2);
+    Buffer[3] = MmioRead32 (DWMMC_RESP3);
   }
   return EFI_SUCCESS;
 }
