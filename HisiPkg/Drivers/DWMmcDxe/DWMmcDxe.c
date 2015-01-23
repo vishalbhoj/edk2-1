@@ -220,8 +220,6 @@ DWMmcNotifyState (
       Data = MmioRead32 (DWMMC_BMOD);
     } while (Data & DWMMC_IDMAC_SWRESET);
 
-    // 1-bit mode
-    MmioWrite32 (DWMMC_CTYPE, 0);
 
 #if 0
     Data = DWMMC_DMA_BURST_SIZE(2) | DWMMC_FIFO_TWMARK(8) | DWMMC_FIFO_RWMARK(7);
@@ -558,6 +556,31 @@ out:
   return Status;
 }
 
+EFI_STATUS
+DWMmcSetIos (
+  IN EFI_MMC_HOST_PROTOCOL      *This,
+  IN  UINT32                    BusClockFreq,
+  IN  UINT32                    BusWidth
+  )
+{
+  EFI_STATUS Status = EFI_SUCCESS;
+
+  switch (BusWidth) {
+  case 0:
+  case 4:
+  case 8:
+    // 0 -- 1-bit mode
+    MmioWrite32 (DWMMC_CTYPE, BusWidth);
+    break;
+  default:
+    return EFI_UNSUPPORTED;
+  }
+  if (BusClockFreq) {
+    Status = DWMmcSetClock (BusClockFreq);
+  }
+  return Status;
+}
+
 EFI_MMC_HOST_PROTOCOL gMciHost = {
   MMC_HOST_PROTOCOL_REVISION,
   DWMmcIsCardPresent,
@@ -567,7 +590,8 @@ EFI_MMC_HOST_PROTOCOL gMciHost = {
   DWMmcSendCommand,
   DWMmcReceiveResponse,
   DWMmcReadBlockData,
-  DWMmcWriteBlockData
+  DWMmcWriteBlockData,
+  DWMmcSetIos
 };
 
 EFI_STATUS
