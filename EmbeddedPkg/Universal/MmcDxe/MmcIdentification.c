@@ -28,6 +28,18 @@ typedef union {
 #define EMMC_ECSD_SIZE_OFFSET   53
 
 #define EXTCSD_BUS_WIDTH        183
+#define EXTCSD_HS_TIMING        185
+
+#define EMMC_TIMING_BACKWARD    0
+#define EMMC_TIMING_HS          1
+#define EMMC_TIMING_HS200       2
+#define EMMC_TIMING_HS400       3
+
+#define EMMC_BUS_WIDTH_1BIT     0
+#define EMMC_BUS_WIDTH_4BIT     1
+#define EMMC_BUS_WIDTH_8BIT     2
+#define EMMC_BUS_WIDTH_DDR_4BIT 5
+#define EMMC_BUS_WIDTH_DDR_8BIT 6
 
 #define EMMC_SWITCH_ERROR       (1 << 7)
 
@@ -174,7 +186,7 @@ EmmcIdentificationMode (
   }
 
   // Set 1-bit bus width
-  Status = Host->SetIos (Host, 0, 0);
+  Status = Host->SetIos (Host, 0, 1, EMMCBACKWARD);
   if (EFI_ERROR (Status)) {
     DEBUG ((EFI_D_ERROR, "EmmcIdentificationMode(): Set 1-bit bus width error, Status=%r.\n", Status));
     return Status;
@@ -183,7 +195,7 @@ EmmcIdentificationMode (
   // MMC v4 specific
   if (MmcHostInstance->CardInfo.CSDData.SPEC_VERS == 4) {
     // Set 1-bit bus width for EXTCSD
-    Status = EmmcSetEXTCSD (MmcHostInstance, EXTCSD_BUS_WIDTH, 0);
+    Status = EmmcSetEXTCSD (MmcHostInstance, EXTCSD_BUS_WIDTH, EMMC_BUS_WIDTH_1BIT);
     if (EFI_ERROR (Status)) {
       DEBUG ((EFI_D_ERROR, "EmmcIdentificationMode(): Set extcsd bus width error, Status=%r.\n", Status));
       return Status;
@@ -223,6 +235,59 @@ EmmcIdentificationMode (
   Media->LogicalBlocksPerPhysicalBlock = 1;
   Media->IoAlign = 4;
   return EFI_SUCCESS;
+}
+
+STATIC
+EFI_STATUS
+InitializeEmmcDevice (
+  IN  MMC_HOST_INSTANCE   *MmcHostInstance
+  )
+{
+  EFI_MMC_HOST_PROTOCOL *Host;
+  EFI_STATUS Status;
+  ECSD       *ECSDData;
+  BOOLEAN    Found = FALSE;
+  UINT32     BusClockFreq, Idx;
+  UINT32     TimingMode[4] = {EMMCHS52DDR1V2, EMMCHS52DDR1V8, EMMCHS52, EMMCHS26};
+
+  Host  = MmcHostInstance->MmcHost;
+  if (MmcHostInstance->CardInfo.CSDData.SPEC_VERS < 4)
+    return EFI_SUCCESS;
+  ECSDData = &MmcHostInstance->CardInfo.ECSDData;
+  if (ECSDData->DEVICE_TYPE == EMMCBACKWARD)
+    return EFI_SUCCESS;
+
+  Status = EmmcSetEXTCSD (MmcHostInstance, EXTCSD_HS_TIMING, EMMC_TIMING_HS);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "InitializeEmmcDevice(): Failed to switch high speed mode, Status:%r.\n", Status));
+    return Status;
+  }
+
+  for (Idx = 0; Idx < 4; Idx++) {
+    switch (TimingMode[Idx]) {
+    case EMMCHS52DDR1V2:
+    case EMMCHS52DDR1V8:
+    case EMMCHS52:
+      BusClockFreq = 52000000;
+      break;
+    case EMMCHS26:
+      BusClockFreq = 26000000;
+      break;
+    default:
+      return EFI_UNSUPPORTED;
+    }
+    Status = Host->SetIos (Host, BusClockFreq, 8, TimingMode[Idx]);
+    if (!EFI_ERROR (Status)) {
+      Found = TRUE;
+      break;
+    }
+  }
+  if (Found) {
+    Status = EmmcSetEXTCSD (MmcHostInstance, EXTCSD_BUS_WIDTH, EMMC_BUS_WIDTH_8BIT);
+    if (EFI_ERROR (Status))
+      DEBUG ((DEBUG_ERROR, "InitializeEmmcDevice(): Failed to set EXTCSD bus width, Status:%r\n", Status));
+  }
+  return Status;
 }
 
 STATIC
@@ -543,11 +608,13 @@ InitializeMmcDevice (
     return Status;
   }
 
-  if (MmcHostInstance->CardInfo.CardType != EMMC_CARD) {
+  if (MmcHostInstance->CardInfo.CardType == EMMC_CARD) {
+    Status = InitializeEmmcDevice (MmcHostInstance);
+  } else {
     Status = InitializeSdMmcDevice (MmcHostInstance);
-    if (EFI_ERROR (Status)) {
-      return Status;
-    }
+  }
+  if (EFI_ERROR (Status)) {
+    return Status;
   }
 
   // Set Block Length
