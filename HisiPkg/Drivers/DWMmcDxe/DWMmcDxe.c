@@ -560,17 +560,35 @@ EFI_STATUS
 DWMmcSetIos (
   IN EFI_MMC_HOST_PROTOCOL      *This,
   IN  UINT32                    BusClockFreq,
-  IN  UINT32                    BusWidth
+  IN  UINT32                    BusWidth,
+  IN  UINT32                    TimingMode
   )
 {
   EFI_STATUS Status = EFI_SUCCESS;
+  UINT32    Data;
+
+  if (TimingMode != EMMCBACKWARD) {
+    Data = MmioRead32 (DWMMC_UHSREG);
+    switch (TimingMode) {
+    case EMMCHS52:
+    case EMMCHS26:
+      Data &= ~(1 << 16);
+      break;
+    default:
+      return EFI_UNSUPPORTED;
+    }
+    MmioWrite32 (DWMMC_UHSREG, Data);
+  }
 
   switch (BusWidth) {
-  case 0:
+  case 1:
+    MmioWrite32 (DWMMC_CTYPE, 0);
+    break;
   case 4:
+    MmioWrite32 (DWMMC_CTYPE, 1);
+    break;
   case 8:
-    // 0 -- 1-bit mode
-    MmioWrite32 (DWMMC_CTYPE, BusWidth);
+    MmioWrite32 (DWMMC_CTYPE, 1 << 16);
     break;
   default:
     return EFI_UNSUPPORTED;
