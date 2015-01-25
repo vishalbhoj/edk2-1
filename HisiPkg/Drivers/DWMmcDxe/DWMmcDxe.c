@@ -570,6 +570,10 @@ DWMmcSetIos (
   if (TimingMode != EMMCBACKWARD) {
     Data = MmioRead32 (DWMMC_UHSREG);
     switch (TimingMode) {
+    case EMMCHS52DDR1V2:
+    case EMMCHS52DDR1V8:
+      Data |= 1 << 16;
+      break;
     case EMMCHS52:
     case EMMCHS26:
       Data &= ~(1 << 16);
