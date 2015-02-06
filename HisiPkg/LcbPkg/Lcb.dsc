@@ -157,9 +157,9 @@
   # ARM OS Loader
   #
   gArmPlatformTokenSpaceGuid.PcdDefaultBootDescription|L"Linux from eMMC"
-  gArmPlatformTokenSpaceGuid.PcdDefaultBootDevicePath|L"VenHw(B549F005-4BD4-4020-A0CB-06F42BDA68C3)/HD(27,GPT,F9F21F1B-A8D4-5F0E-9746-594869AEC34E,0xC0000,0xC000)/Image"
-  gArmPlatformTokenSpaceGuid.PcdFdtDevicePath|L"VenHw(B549F005-4BD4-4020-A0CB-06F42BDA68C3)/HD(27,GPT,F9F21F1B-A8D4-5F0E-9746-594869AEC34E,0xC0000,0xC000)/lcb.dtb"
-  gArmPlatformTokenSpaceGuid.PcdDefaultBootArgument|"console=ttyAMA0,115200 earlyprintk=pl011,0xf8015000 root=/dev/sda1 rootwait verbose debug"
+  gArmPlatformTokenSpaceGuid.PcdDefaultBootDevicePath|L"VenHw(B549F005-4BD4-4020-A0CB-06F42BDA68C3)/HD(6,GPT,5C0F213C-17E1-4149-88C8-8B50FB4EC70E,0x7000,0x20000)/Image"
+  gArmPlatformTokenSpaceGuid.PcdFdtDevicePath|L"VenHw(B549F005-4BD4-4020-A0CB-06F42BDA68C3)/HD(6,GPT,5C0F213C-17E1-4149-88C8-8B50FB4EC70E,0x7000,0x20000)/lcb.dtb"
+  gArmPlatformTokenSpaceGuid.PcdDefaultBootArgument|"console=ttyAMA0,115200 earlycon=pl011,0xf8015000 root=/dev/mmcblk0p9 rw verbose debug user_debug=31 loglevel=8 maxcpus=1"
   gArmPlatformTokenSpaceGuid.PcdDefaultBootType|2
 
   # Use the serial console (ConIn & ConOut) and the Graphic driver (ConOut)
