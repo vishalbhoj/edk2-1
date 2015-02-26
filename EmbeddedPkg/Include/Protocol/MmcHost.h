@@ -107,6 +107,10 @@ typedef BOOLEAN (EFIAPI *MMC_ISREADONLY) (
   IN  EFI_MMC_HOST_PROTOCOL   *This
   );
 
+typedef BOOLEAN (EFIAPI *MMC_ISDMASUPPORTED) (
+  IN  EFI_MMC_HOST_PROTOCOL   *This
+  );
+
 typedef EFI_STATUS (EFIAPI *MMC_BUILDDEVICEPATH) (
   IN  EFI_MMC_HOST_PROTOCOL     *This,
   OUT EFI_DEVICE_PATH_PROTOCOL  **DevicePath
@@ -156,6 +160,7 @@ struct _EFI_MMC_HOST_PROTOCOL {
   UINT32                  Revision;
   MMC_ISCARDPRESENT       IsCardPresent;
   MMC_ISREADONLY          IsReadOnly;
+  MMC_ISDMASUPPORTED      IsDmaSupported;
   MMC_BUILDDEVICEPATH     BuildDevicePath;
 
   MMC_NOTIFYSTATE         NotifyState;
