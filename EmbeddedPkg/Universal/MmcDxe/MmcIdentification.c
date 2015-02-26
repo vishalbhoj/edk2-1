@@ -70,28 +70,30 @@ EmmcGetDeviceState (
 {
   EFI_MMC_HOST_PROTOCOL *Host;
   EFI_STATUS Status;
-  UINT32     Data, RCA;
+  UINT32     Rsp[4], RCA;
 
   if (State == NULL)
     return EFI_INVALID_PARAMETER;
 
   Host  = MmcHostInstance->MmcHost;
   RCA = MmcHostInstance->CardInfo.RCA << RCA_SHIFT_OFFSET;
-  Status = Host->SendCommand (Host, MMC_CMD13, RCA);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "EmmcGetDeviceState(): Failed to get card status, Status=%r.\n", Status));
-    return Status;
-  }
-  Status = Host->ReceiveResponse (Host, MMC_RESPONSE_TYPE_R1, &Data);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "EmmcGetDeviceState(): Failed to get response of CMD13, Status=%r.\n", Status));
-    return Status;
-  }
-  if (Data & EMMC_SWITCH_ERROR) {
-    DEBUG ((EFI_D_ERROR, "EmmcGetDeviceState(): Failed to switch expected mode, Status=%r.\n", Status));
-    return EFI_DEVICE_ERROR;
-  }
-  *State = DEVICE_STATE(Data);
+  do {
+    Status = Host->SendCommand (Host, MMC_CMD13, RCA);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((EFI_D_ERROR, "EmmcGetDeviceState(): Failed to get card status, Status=%r.\n", Status));
+      return Status;
+    }
+    Status = Host->ReceiveResponse (Host, MMC_RESPONSE_TYPE_R1, (UINT32 *)&Rsp);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((EFI_D_ERROR, "EmmcGetDeviceState(): Failed to get response of CMD13, Status=%r.\n", Status));
+      return Status;
+    }
+    if (Rsp[0] & EMMC_SWITCH_ERROR) {
+      DEBUG ((EFI_D_ERROR, "EmmcGetDeviceState(): Failed to switch expected mode, Status=%r.\n", Status));
+      return EFI_DEVICE_ERROR;
+    }
+  } while (!(Rsp[0] & MMC_R0_READY_FOR_DATA));
+  *State = MMC_R0_CURRENTSTATE(Rsp);
   return EFI_SUCCESS;
 }
 
