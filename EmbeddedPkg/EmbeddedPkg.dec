@@ -137,6 +137,10 @@
   gEmbeddedTokenSpaceGuid.PcdDwMmcBaseAddress|0x0|UINT32|0x00000050
   gEmbeddedTokenSpaceGuid.PcdDwMmcClockFrequencyInHz|0x0|UINT32|0x00000051
  
+  # DwUsb Driver PCDs
+  gEmbeddedTokenSpaceGuid.PcdDwUsbBaseAddress|0x0|UINT32|0x00000054
+  gEmbeddedTokenSpaceGuid.PcdSysCtrlBaseAddress|0x0|UINT32|0x00000055
+
   # LAN9118 Ethernet Driver PCDs
   gEmbeddedTokenSpaceGuid.PcdLan9118DxeBaseAddress|0x0|UINT32|0x00000025
   gEmbeddedTokenSpaceGuid.PcdLan9118DefaultMacAddress|0x0|UINT64|0x00000026
