@@ -447,8 +447,6 @@ PrepareDmaData (
   UINT32 Data;
 
   Cnt = (Length + DWMMC_DMA_BUF_SIZE - 1) / DWMMC_DMA_BUF_SIZE;
-  if (Cnt > EFI_PAGE_SIZE)
-    return EFI_BUFFER_TOO_SMALL;
   Blks = (Length + DWMMC_BLOCK_SIZE - 1) / DWMMC_BLOCK_SIZE;
   Length = DWMMC_BLOCK_SIZE * Blks;
 
