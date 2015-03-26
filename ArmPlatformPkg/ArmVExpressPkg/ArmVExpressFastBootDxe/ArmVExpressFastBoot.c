@@ -395,7 +395,9 @@ ArmFastbootPlatformGetVar (
   OUT CHAR8   *Value
   )
 {
-  if (AsciiStrCmp (Name, "product")) {
+  if (!AsciiStrCmp (Name, "max-download-size")) {
+    AsciiStrCpy (Value, FixedPcdGetPtr (PcdArmFastbootFlashLimit));
+  } else if (AsciiStrCmp (Name, "product")) {
     AsciiStrCpy (Value, FixedPcdGetPtr (PcdFirmwareVendor));
   } else {
     *Value = '\0';
