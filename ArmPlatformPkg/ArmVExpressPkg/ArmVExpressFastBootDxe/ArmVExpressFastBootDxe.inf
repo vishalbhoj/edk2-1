@@ -52,3 +52,4 @@
 [Pcd]
   gArmVExpressTokenSpaceGuid.PcdAndroidFastbootNvmDevicePath
   gArmPlatformTokenSpaceGuid.PcdFirmwareVendor
+  gArmPlatformTokenSpaceGuid.PcdArmFastbootFlashLimit
