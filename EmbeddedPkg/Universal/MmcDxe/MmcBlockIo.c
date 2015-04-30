@@ -159,7 +159,7 @@ MmcTransferBlock (
 
   Status = MmcHost->SendCommand (MmcHost, Cmd, CmdArg);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "MmcIoBlocks(MMC_CMD%d): Error %r\n", Cmd, Status));
+    DEBUG ((EFI_D_ERROR, "MmcIoBlocks(MMC_CMD%d): Error %r\n", Cmd & 0x3F, Status));
     return Status;
   }
 
