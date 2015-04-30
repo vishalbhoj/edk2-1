@@ -310,6 +310,8 @@ InitializeSdMmcDevice (
 {
   UINT32        CmdArg;
   UINT32        Response[4];
+  UINT32        Buffer[64];
+  UINT32        Index;
   UINTN         BlockSize;
   UINTN         CardSize;
   UINTN         NumBlocks;
@@ -363,6 +365,67 @@ InitializeSdMmcDevice (
     return Status;
   }
 
+#if 0
+  /* not used in fastboot */
+  Status = MmcHost->SendCommand (MmcHost, MMC_CMD55, CmdArg);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_ERROR, "%a(MMC_CMD55): Error and Status = %r\n", Status));
+    return Status;
+  }
+  /* SCR */
+  Status = MmcHost->SendCommand (MmcHost, MMC_CMD51, 0);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_ERROR, "%a(MMC_CMD51): Error and Status = %r\n", Status));
+    return Status;
+  } else {
+    Buffer[0] = 0;
+    Buffer[1] = 0;
+    Status = MmcHost->ReadBlockData (MmcHost, 0, 64, Buffer);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((EFI_D_ERROR, "%a(MMC_CMD51): ReadBlockData Error and Status = %r\n", Status));
+      return Status;
+    }
+    DEBUG ((EFI_D_ERROR, "%x %x\n", Buffer[0], Buffer[1]));
+  }
+#endif
+#if 1
+  /* SD Switch, Mode:1, Group:0, Value:1 */
+  CmdArg = 1 << 31 | 0x00FFFFFF;
+  CmdArg &= ~(0xF << (0 * 4));
+  CmdArg |= 1 << (0 * 4);
+  Status = MmcHost->SendCommand (MmcHost, MMC_CMD6, CmdArg);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_ERROR, "%a(MMC_CMD6): Error and Status = %r\n", Status));
+     return Status;
+  } else {
+    for (Index = 0; Index < 64; Index++)
+      Buffer[Index] = 0;
+    Status = MmcHost->ReadBlockData (MmcHost, 0, 64, Buffer);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((EFI_D_ERROR, "%a(MMC_CMD6): ReadBlockData Error and Status = %r\n", Status));
+      return Status;
+    }
+    for (Index = 0; Index < 16; Index += 4)
+      DEBUG ((EFI_D_ERROR, "%x %x %x %x\n", Buffer[Index], Buffer[Index + 1], Buffer[Index + 2], Buffer[Index + 3]));
+  }
+#endif
+  CmdArg = MmcHostInstance->CardInfo.RCA << 16;
+  Status = MmcHost->SendCommand (MmcHost, MMC_CMD55, CmdArg);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_ERROR, "%a(MMC_CMD55): Error and Status = %r\n", Status));
+    return Status;
+  }
+  /* Width: 4 */
+  Status = MmcHost->SendCommand (MmcHost, MMC_CMD6, 2);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_ERROR, "%a(MMC_CMD6): Error and Status = %r\n", Status));
+    return Status;
+  }
+  Status = MmcHost->SetIos (MmcHost, 24 * 1000 * 1000, 4, EMMCBACKWARD);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_ERROR, "%a(SetIos): Error and Status = %r\n", Status));
+    return Status;
+  }
   return EFI_SUCCESS;
 }
 
