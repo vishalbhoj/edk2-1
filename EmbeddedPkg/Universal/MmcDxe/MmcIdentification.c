@@ -310,7 +310,7 @@ InitializeSdMmcDevice (
 {
   UINT32        CmdArg;
   UINT32        Response[4];
-  UINT32        Buffer[64];
+  UINT32        Buffer[128];
   UINT32        Index;
   UINTN         BlockSize;
   UINTN         CardSize;
@@ -388,7 +388,6 @@ InitializeSdMmcDevice (
     DEBUG ((EFI_D_ERROR, "%x %x\n", Buffer[0], Buffer[1]));
   }
 #endif
-#if 1
   /* SD Switch, Mode:1, Group:0, Value:1 */
   CmdArg = 1 << 31 | 0x00FFFFFF;
   CmdArg &= ~(0xF << (0 * 4));
@@ -405,10 +404,11 @@ InitializeSdMmcDevice (
       DEBUG ((EFI_D_ERROR, "%a(MMC_CMD6): ReadBlockData Error and Status = %r\n", Status));
       return Status;
     }
+    /*
     for (Index = 0; Index < 16; Index += 4)
       DEBUG ((EFI_D_ERROR, "%x %x %x %x\n", Buffer[Index], Buffer[Index + 1], Buffer[Index + 2], Buffer[Index + 3]));
+      */
   }
-#endif
   CmdArg = MmcHostInstance->CardInfo.RCA << 16;
   Status = MmcHost->SendCommand (MmcHost, MMC_CMD55, CmdArg);
   if (EFI_ERROR (Status)) {
