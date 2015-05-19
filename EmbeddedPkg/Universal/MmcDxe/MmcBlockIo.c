@@ -307,15 +307,6 @@ MmcIoBlocks (
       } else { // Transfer
         CmdArg = (BlockCount & 0xffff) | (1 << 24);
       } 
-      Timeout = 20;
-      while (Timeout > 0) {
-        Status = MmcHost->SendCommand (MmcHost, MMC_CMD23, CmdArg);
-        if (!EFI_ERROR (Status)) {
-	  break;
-        }
-	MmcStopTransmission (MmcHost);
-	Timeout--;
-      }
       Response[0] = 0;
       Timeout = 20;
       while(   (!(Response[0] & MMC_R0_READY_FOR_DATA))
@@ -346,6 +337,11 @@ MmcIoBlocks (
       if (EFI_ERROR (Status)) {
 	DEBUG ((EFI_D_ERROR, "Failed to transfer data with dma\n"));
 	return EFI_NOT_READY;
+      }
+      Status = MmcHost->SendCommand (MmcHost, MMC_CMD12, 0);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((EFI_D_ERROR, "%a(MMC_CMD12): Error and Status = %r\n", Status));
+        return Status;
       }
       BytesRemainingToBeTransfered -= BlockCount * This->Media->BlockSize;
     } else { // IsDmaSupported
