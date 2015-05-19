@@ -12,7 +12,7 @@
 *
 **/
 
-#include <Library/BaseMemoryLib/MemLibInternals.h>
+#include <Library/BaseMemoryLib.h>
 #include <Library/TimerLib.h>
 
 #include "Mmc.h"
@@ -392,7 +392,7 @@ InitializeSdMmcDevice (
       DEBUG ((EFI_D_ERROR, "%a(MMC_CMD51): ReadBlockData Error and Status = %r\n", Status));
       return Status;
     }
-    InternalMemCopyMem (&Scr, Buffer, 8);
+    CopyMem (&Scr, Buffer, 8);
     if (Scr.SD_SPEC == 2) {
       if (Scr.SD_SPEC3 == 1) {
 	if (Scr.SD_SPEC4 == 1) {
