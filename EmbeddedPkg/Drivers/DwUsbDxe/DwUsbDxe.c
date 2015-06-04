@@ -13,18 +13,21 @@
 
 **/
 
+#include <IndustryStandard/Usb.h>
 #include <Library/TimerLib.h>
 #include <Library/DebugLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiDriverEntryPoint.h>
+#include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/IoLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/UncachedMemoryAllocationLib.h>
 #include <Library/CacheMaintenanceLib.h>
-#include <IndustryStandard/Usb.h>
 #include <Library/BaseMemoryLib.h>
-#include <Protocol/UsbDevice.h>
 #include <Library/BaseLib.h>
+#include <Protocol/UsbDevice.h>
+#include <Guid/ArmGlobalVariableHob.h>
+
 #include "DwUsbDxe.h"
 
 STATIC dwc_otg_dev_dma_desc_t *g_dma_desc,*g_dma_desc_ep0,*g_dma_desc_in;
@@ -50,6 +53,12 @@ STATIC USB_ENDPOINT_DESCRIPTOR  *mEndpointDescriptors;
 
 STATIC USB_DEVICE_RX_CALLBACK   mDataReceivedCallback;
 STATIC USB_DEVICE_TX_CALLBACK   mDataSentCallback;
+
+STATIC EFI_USB_STRING_DESCRIPTOR mSerialStringDescriptor = {
+  34,
+  USB_DESC_TYPE_STRING,
+  {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'}
+};
 
 // The time between interrupt polls, in units of 100 nanoseconds
 // 10 Microseconds
@@ -201,6 +210,9 @@ HandleGetDescriptor (
   UINT8       DescriptorType;
   UINTN       ResponseSize;
   VOID       *ResponseData;
+  CHAR16      SerialNo[16];
+  UINTN       SerialNoLen;
+  EFI_STATUS  Status;
 
   ResponseSize = 0;
   ResponseData = NULL;
@@ -223,6 +235,22 @@ HandleGetDescriptor (
     break;
   case USB_DESC_TYPE_STRING:
     DEBUG ((EFI_D_INFO, "USB: Got a request for String descriptor %d\n", Request->Value & 0xFF));
+    switch (Request->Value & 0xff) {
+    case 3:
+      Status = gRT->GetVariable (
+                      (CHAR16*)L"SerialNo",
+                      &gArmGlobalVariableGuid,
+                      NULL,
+                      &SerialNoLen,
+                      SerialNo
+                      );
+      if (EFI_ERROR (Status) == 0) {
+        CopyMem (mSerialStringDescriptor.String, SerialNo, SerialNoLen);
+      }
+      ResponseSize = mSerialStringDescriptor.Length;
+      ResponseData = &mSerialStringDescriptor;
+      break;
+    }
     break;
   default:
     DEBUG ((EFI_D_INFO, "USB: Didn't understand request for descriptor 0x%04x\n", Request->Value));
