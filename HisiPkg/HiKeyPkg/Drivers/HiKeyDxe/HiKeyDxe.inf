@@ -23,6 +23,7 @@
 [Sources.common]
   HiKeyDxe.c
   InstallFdt.c
+  InstallBootMenu.c
 
 [Packages]
   ArmPkg/ArmPkg.dec
@@ -49,13 +50,16 @@
   gArmGlobalVariableGuid
   gEfiEndOfDxeEventGroupGuid
   gEfiFileInfoGuid
+  gEfiGlobalVariableGuid
   gFdtTableGuid
   gArmPlatformUpdateFdtEventGuid
 
 [Protocols]
   gEfiBlockIoProtocolGuid
   gEfiDevicePathFromTextProtocolGuid
+  gEfiDevicePathToTextProtocolGuid
   gEfiSimpleFileSystemProtocolGuid
+  gEmbeddedGpioProtocolGuid
 
 [FixedPcd]
   gArmTokenSpaceGuid.PcdSystemMemoryBase

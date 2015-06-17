@@ -125,7 +125,7 @@ Get (
     }
   }
 
-  if (MmioRead8 (PL061_GPIO_DATA_REG) & GPIO_PIN_MASK_HIGH_8BIT(Gpio)) {
+  if (MmioRead8 (PL061_GPIO_DATA_REG + (GPIO_PIN_MASK_HIGH_8BIT(Gpio) << 2))) {
     *Value = 1;
   } else {
     *Value = 0;
@@ -186,14 +186,14 @@ Set (
 
     case GPIO_MODE_OUTPUT_0:
       // Set the corresponding data bit to LOW for 0
-      MmioAnd8 (PL061_GPIO_DATA_REG, GPIO_PIN_MASK_LOW_8BIT(Gpio));
+      MmioAnd8 (PL061_GPIO_DATA_REG + (GPIO_PIN_MASK_HIGH_8BIT(Gpio) << 2), GPIO_PIN_MASK_LOW_8BIT(Gpio));
       // Set the corresponding direction bit to HIGH for output
       MmioOr8 (PL061_GPIO_DIR_REG, GPIO_PIN_MASK_HIGH_8BIT(Gpio));
       break;
 
     case GPIO_MODE_OUTPUT_1:
       // Set the corresponding data bit to HIGH for 1
-      MmioOr8 (PL061_GPIO_DATA_REG, GPIO_PIN_MASK_HIGH_8BIT(Gpio));
+      MmioOr8 (PL061_GPIO_DATA_REG + (GPIO_PIN_MASK_HIGH_8BIT(Gpio) << 2), GPIO_PIN_MASK_HIGH_8BIT(Gpio));
       // Set the corresponding direction bit to HIGH for output
       MmioOr8 (PL061_GPIO_DIR_REG, GPIO_PIN_MASK_HIGH_8BIT(Gpio));
       break;
