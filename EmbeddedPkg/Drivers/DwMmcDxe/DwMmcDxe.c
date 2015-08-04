@@ -14,6 +14,7 @@
 
 **/
 
+#include <Library/ArmLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/CacheMaintenanceLib.h>
 #include <Library/DebugLib.h>
@@ -319,11 +320,14 @@ SendCommand (
             DWMMC_INT_RCRC | DWMMC_INT_RE;
   ErrMask |= DWMMC_INT_DCRC | DWMMC_INT_DRT | DWMMC_INT_SBE;
   do {
-    MicroSecondDelay(500);
+    ArmInstructionSynchronizationBarrier ();
+    ArmDataSyncronizationBarrier ();
     Data = MmioRead32 (DWMMC_RINTSTS);
 
-    if (Data & ErrMask)
+    if (Data & ErrMask) {
+      DEBUG ((EFI_D_ERROR, "%a, Error RINTSTS value:0x%x\n", __func__, Data));
       return EFI_DEVICE_ERROR;
+    }
     if (Data & DWMMC_INT_DTO)	// Transfer Done
       break;
   } while (!(Data & DWMMC_INT_CMD_DONE));
