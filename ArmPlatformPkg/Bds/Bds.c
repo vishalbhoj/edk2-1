@@ -530,12 +530,12 @@ BdsEntry (
       // BootNext has not been succeeded launched
       if (EFI_ERROR(Status)) {
         Print(L"Fail to start BootNext.\n");
-      }
 
-      // Delete the BootNext environment variable
-      gRT->SetVariable (L"BootNext", &gEfiGlobalVariableGuid,
-          EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-          0, NULL);
+        // Delete the BootNext environment variable
+        gRT->SetVariable (L"BootNext", &gEfiGlobalVariableGuid,
+            EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+            0, NULL);
+      }
     }
 
     // Clear BootCurrent variable
