@@ -54,6 +54,24 @@ STATIC USB_ENDPOINT_DESCRIPTOR  *mEndpointDescriptors;
 STATIC USB_DEVICE_RX_CALLBACK   mDataReceivedCallback;
 STATIC USB_DEVICE_TX_CALLBACK   mDataSentCallback;
 
+STATIC EFI_USB_STRING_DESCRIPTOR mLangStringDescriptor = {
+  4,
+  USB_DESC_TYPE_STRING,
+  {0x409}
+};
+
+STATIC EFI_USB_STRING_DESCRIPTOR mManufacturerStringDescriptor = {
+  18,
+  USB_DESC_TYPE_STRING,
+  {'9', '6', 'B', 'o', 'a', 'r', 'd', 's'}
+};
+
+STATIC EFI_USB_STRING_DESCRIPTOR mProductStringDescriptor = {
+  12,
+  USB_DESC_TYPE_STRING,
+  {'H', 'i', 'K', 'e', 'y'}
+};
+
 STATIC EFI_USB_STRING_DESCRIPTOR mSerialStringDescriptor = {
   34,
   USB_DESC_TYPE_STRING,
@@ -236,6 +254,18 @@ HandleGetDescriptor (
   case USB_DESC_TYPE_STRING:
     DEBUG ((EFI_D_INFO, "USB: Got a request for String descriptor %d\n", Request->Value & 0xFF));
     switch (Request->Value & 0xff) {
+    case 0:
+      ResponseSize = mLangStringDescriptor.Length;
+      ResponseData = &mLangStringDescriptor;
+      break;
+    case 1:
+      ResponseSize = mManufacturerStringDescriptor.Length;
+      ResponseData = &mManufacturerStringDescriptor;
+      break;
+    case 2:
+      ResponseSize = mProductStringDescriptor.Length;
+      ResponseData = &mProductStringDescriptor;
+      break;
     case 3:
       Status = gRT->GetVariable (
                       (CHAR16*)L"SerialNo",
