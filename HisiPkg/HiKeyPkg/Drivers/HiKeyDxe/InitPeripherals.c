@@ -25,8 +25,9 @@ HiKeyInitPeripherals (
 {
   UINT32     Data, Bits;
 
-  /* make I2C0/I2C1/I2C2 out of reset */
-  Bits = PERIPH_RST3_I2C0 | PERIPH_RST3_I2C1 | PERIPH_RST3_I2C2;
+  /* make I2C0/I2C1/I2C2/SPI0 out of reset */
+  Bits = PERIPH_RST3_I2C0 | PERIPH_RST3_I2C1 | PERIPH_RST3_I2C2 | \
+	 PERIPH_RST3_SSP;
   MmioWrite32 (SC_PERIPH_RSTDIS3, Bits);
 
   do {
