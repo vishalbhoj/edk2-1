@@ -23,12 +23,13 @@ HiKeyInitPeripherals (
   IN VOID
   )
 {
-  UINT32     Data;
+  UINT32     Data, Bits;
 
-  /* make I2C2 out of reset */
-  MmioWrite32 (SC_PERIPH_RSTDIS3, PERIPH_RST3_I2C2);
+  /* make I2C0/I2C1/I2C2 out of reset */
+  Bits = PERIPH_RST3_I2C0 | PERIPH_RST3_I2C1 | PERIPH_RST3_I2C2;
+  MmioWrite32 (SC_PERIPH_RSTDIS3, Bits);
 
   do {
     Data = MmioRead32 (SC_PERIPH_RSTSTAT3);
-  } while (Data & PERIPH_RST3_I2C2);
+  } while (Data & Bits);
 }
