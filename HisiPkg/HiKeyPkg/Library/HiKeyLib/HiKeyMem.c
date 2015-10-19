@@ -29,6 +29,9 @@
 #define DDR_ATTRIBUTES_CACHED           ARM_MEMORY_REGION_ATTRIBUTE_WRITE_BACK
 #define DDR_ATTRIBUTES_UNCACHED         ARM_MEMORY_REGION_ATTRIBUTE_UNCACHED_UNBUFFERED
 
+#define HIKEY_EXTRA_SYSTEM_MEMORY_BASE  0x40000000
+#define HIKEY_EXTRA_SYSTEM_MEMORY_SIZE  0x40000000
+
 STATIC struct HiKeyReservedMemory {
   EFI_PHYSICAL_ADDRESS         Offset;
   EFI_PHYSICAL_ADDRESS         Size;
@@ -38,6 +41,25 @@ STATIC struct HiKeyReservedMemory {
   { 0x0740F000, 0x00001000 },    // MAILBOX
   { 0x3E000000, 0x02000000 }     // TEE OS
 };
+
+STATIC
+UINT64
+EFIAPI
+HiKeyInitMemorySize (
+  IN VOID
+  )
+{
+  UINT32               Count, Data, MemorySize;
+
+  Count = 0;
+  while (MmioRead32 (MDDRC_AXI_BASE + AXI_REGION_MAP_OFFSET (Count)) != 0) {
+    Count++;
+  }
+  Data = MmioRead32 (MDDRC_AXI_BASE + AXI_REGION_MAP_OFFSET (Count - 1));
+  MemorySize = 16 << ((Data >> 8) & 0x7);
+  MemorySize += Data << 24;
+  return (UINT64) (MemorySize << 20);
+}
 
 /**
   Return the Virtual Memory Map of your platform
@@ -61,6 +83,9 @@ ArmPlatformGetVirtualMemoryMap (
   EFI_RESOURCE_ATTRIBUTE_TYPE   ResourceAttributes;
   UINT64                        ResourceLength;
   EFI_PHYSICAL_ADDRESS          ResourceTop;
+  UINT64                        MemorySize, AdditionalMemorySize;
+
+  MemorySize = HiKeyInitMemorySize ();
 
   NextHob.Raw = GetHobList ();
   Count = sizeof (HiKeyReservedMemoryBuffer) / sizeof (struct HiKeyReservedMemory);
@@ -99,6 +124,25 @@ ArmPlatformGetVirtualMemoryMap (
     NextHob.Raw = GET_NEXT_HOB (NextHob);
   }
 
+  AdditionalMemorySize = MemorySize - PcdGet64 (PcdSystemMemorySize);
+  if (AdditionalMemorySize > 0) {
+    // Declared the additional memory
+    ResourceAttributes =
+        EFI_RESOURCE_ATTRIBUTE_PRESENT |
+        EFI_RESOURCE_ATTRIBUTE_INITIALIZED |
+        EFI_RESOURCE_ATTRIBUTE_UNCACHEABLE |
+        EFI_RESOURCE_ATTRIBUTE_WRITE_COMBINEABLE |
+        EFI_RESOURCE_ATTRIBUTE_WRITE_THROUGH_CACHEABLE |
+        EFI_RESOURCE_ATTRIBUTE_WRITE_BACK_CACHEABLE |
+        EFI_RESOURCE_ATTRIBUTE_TESTED;
+
+    BuildResourceDescriptorHob (
+      EFI_RESOURCE_SYSTEM_MEMORY,
+      ResourceAttributes,
+      HIKEY_EXTRA_SYSTEM_MEMORY_BASE,
+      HIKEY_EXTRA_SYSTEM_MEMORY_SIZE);
+  }
+
   ASSERT (VirtualMemoryMap != NULL);
 
   VirtualMemoryTable = (ARM_MEMORY_REGION_DESCRIPTOR*)AllocatePages(EFI_SIZE_TO_PAGES (sizeof(ARM_MEMORY_REGION_DESCRIPTOR) * MAX_VIRTUAL_MEMORY_MAP_DESCRIPTORS));
@@ -125,6 +169,13 @@ ArmPlatformGetVirtualMemoryMap (
   VirtualMemoryTable[Index].VirtualBase     = PcdGet64 (PcdSystemMemoryBase);
   VirtualMemoryTable[Index].Length          = PcdGet64 (PcdSystemMemorySize);
   VirtualMemoryTable[Index].Attributes      = CacheAttributes;
+
+  if (AdditionalMemorySize > 0) {
+    VirtualMemoryTable[++Index].PhysicalBase = HIKEY_EXTRA_SYSTEM_MEMORY_BASE;
+    VirtualMemoryTable[Index].VirtualBase    = HIKEY_EXTRA_SYSTEM_MEMORY_BASE;
+    VirtualMemoryTable[Index].Length         = HIKEY_EXTRA_SYSTEM_MEMORY_SIZE;
+    VirtualMemoryTable[Index].Attributes     = CacheAttributes;
+  }
 
   // End of Table
   VirtualMemoryTable[++Index].PhysicalBase  = 0;
