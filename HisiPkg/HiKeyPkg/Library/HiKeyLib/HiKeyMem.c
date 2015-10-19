@@ -125,7 +125,7 @@ ArmPlatformGetVirtualMemoryMap (
   }
 
   AdditionalMemorySize = MemorySize - PcdGet64 (PcdSystemMemorySize);
-  if (AdditionalMemorySize > 0) {
+  if (AdditionalMemorySize >= SIZE_1GB) {
     // Declared the additional memory
     ResourceAttributes =
         EFI_RESOURCE_ATTRIBUTE_PRESENT |
@@ -170,7 +170,7 @@ ArmPlatformGetVirtualMemoryMap (
   VirtualMemoryTable[Index].Length          = PcdGet64 (PcdSystemMemorySize);
   VirtualMemoryTable[Index].Attributes      = CacheAttributes;
 
-  if (AdditionalMemorySize > 0) {
+  if (AdditionalMemorySize >= SIZE_1GB) {
     VirtualMemoryTable[++Index].PhysicalBase = HIKEY_EXTRA_SYSTEM_MEMORY_BASE;
     VirtualMemoryTable[Index].VirtualBase    = HIKEY_EXTRA_SYSTEM_MEMORY_BASE;
     VirtualMemoryTable[Index].Length         = HIKEY_EXTRA_SYSTEM_MEMORY_SIZE;
