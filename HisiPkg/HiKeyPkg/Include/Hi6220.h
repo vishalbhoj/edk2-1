@@ -24,4 +24,7 @@
 #define HI6220_PERIPH_BASE			0xF4000000
 #define HI6220_PERIPH_SZ			0x05800000
 
+#define MDDRC_AXI_BASE				0xF7120000
+#define AXI_REGION_MAP_OFFSET(x)		(0x100 + (x) * 0x10)
+
 #endif	/* __HI6220_H__ */
