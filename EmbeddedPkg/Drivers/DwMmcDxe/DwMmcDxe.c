@@ -500,20 +500,25 @@ DwMmcReadBlockData (
   CHAR8       CBuffer[100];
   UINTN       CharCount, Idx;
 #endif
+  EFI_TPL     Tpl;
+
+  Tpl = gBS->RaiseTPL (TPL_NOTIFY);
 
   CountPerPage = EFI_PAGE_SIZE / 16;
   Count = (Length + DWMMC_DMA_BUF_SIZE - 1) / DWMMC_DMA_BUF_SIZE;
   DescPages = (Count + CountPerPage - 1) / CountPerPage;
 
   IdmacDesc = (DWMMC_IDMAC_DESCRIPTOR *)UncachedAllocatePages (DescPages);
-  if (IdmacDesc == NULL)
-    return EFI_BUFFER_TOO_SMALL;
+  if (IdmacDesc == NULL) {
+    Status = EFI_BUFFER_TOO_SMALL;
+    goto out;
+  }
 
   InvalidateDataCacheRange (Buffer, Length);
 
   Status = PrepareDmaData (IdmacDesc, Length, Buffer);
   if (EFI_ERROR (Status))
-    goto out;
+    goto out_dma;
 
 #if defined(EARLY_DUMP) || defined(INIT_DUMP) || defined(HACK_CMD8_DUMP)
   Status = SendCommand (17 | BIT_CMD_RESPONSE_EXPECT | BIT_CMD_CHECK_RESPONSE_CRC |
@@ -523,7 +528,7 @@ DwMmcReadBlockData (
   Status = SendCommand (mDwMmcCommand, mDwMmcArgument);
   if (EFI_ERROR (Status)) {
     DEBUG ((EFI_D_ERROR, "Failed to read data, mDwMmcCommand:%x, mDwMmcArgument:%x, Status:%r\n", mDwMmcCommand, mDwMmcArgument, Status));
-    return Status;
+    goto out_dma;
   }
 #endif
 #ifdef DUMP_BUF
@@ -535,8 +540,11 @@ DwMmcReadBlockData (
     SerialPortWrite ((UINT8 *) CBuffer, CharCount);
   }
 #endif
-out:
+out_dma:
   UncachedFreePages (IdmacDesc, DescPages);
+out:
+  // Restore Tpl
+  gBS->RestoreTPL (Tpl);
   return Status;
 }
 
@@ -551,23 +559,31 @@ DwMmcWriteBlockData (
   DWMMC_IDMAC_DESCRIPTOR*  IdmacDesc;
   EFI_STATUS  Status;
   UINT32      DescPages, CountPerPage, Count;
+  EFI_TPL     Tpl;
+
+  Tpl = gBS->RaiseTPL (TPL_NOTIFY);
 
   CountPerPage = EFI_PAGE_SIZE / 16;
   Count = (Length + DWMMC_DMA_BUF_SIZE - 1) / DWMMC_DMA_BUF_SIZE;
   DescPages = (Count + CountPerPage - 1) / CountPerPage;
   IdmacDesc = (DWMMC_IDMAC_DESCRIPTOR *)UncachedAllocatePages (DescPages);
-  if (IdmacDesc == NULL)
-    return EFI_BUFFER_TOO_SMALL;
+  if (IdmacDesc == NULL) {
+    Status = EFI_BUFFER_TOO_SMALL;
+    goto out;
+  }
 
   WriteBackDataCacheRange (Buffer, Length);
 
   Status = PrepareDmaData (IdmacDesc, Length, Buffer);
   if (EFI_ERROR (Status))
-    goto out;
+    goto out_dma;
 
   Status = SendCommand (mDwMmcCommand, mDwMmcArgument);
-out:
+out_dma:
   UncachedFreePages (IdmacDesc, DescPages);
+out:
+  // Restore Tpl
+  gBS->RestoreTPL (Tpl);
   return Status;
 }
 
