@@ -16,6 +16,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/BdsLib.h>
 #include <Library/DevicePathLib.h>
+#include <Library/IoLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PrintLib.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -55,27 +56,27 @@ STATIC UINT16 mBootCount = 0;
 STATIC UINT16 mBootIndex = 0;
 
 #define HIKEY_BOOT_ENTRY_FASTBOOT          0
-#define HIKEY_BOOT_ENTRY_GRUB_EMMC         1
-#define HIKEY_BOOT_ENTRY_GRUB_SD           2
+#define HIKEY_BOOT_ENTRY_GRUB_EMMC         1    /* boot eMMC with grub */
+#define HIKEY_BOOT_ENTRY_BOOT_SD           2    /* boot SD without grub */
 
 STATIC struct HiKeyBootEntry Entries[] = {
   [HIKEY_BOOT_ENTRY_FASTBOOT] = {
-    L"VenHw(B549F005-4BD4-4020-A0CB-06F42BDA68C3)/HD(6,GPT,5C0F213C-17E1-4149-88C8-8B50FB4EC70E,0x7000,0x20000)/EFI/debian/fastboot.efi",
+    L"VenHw(B549F005-4BD4-4020-A0CB-06F42BDA68C3)/HD(6,GPT,5C0F213C-17E1-4149-88C8-8B50FB4EC70E,0x7000,0x20000)/\\EFI\\DEBIAN\\FASTBOOT.EFI",
     NULL,
     L"fastboot",
     LOAD_OPTION_CATEGORY_APP
   },
   [HIKEY_BOOT_ENTRY_GRUB_EMMC] = {
-    L"VenHw(B549F005-4BD4-4020-A0CB-06F42BDA68C3)/HD(6,GPT,5C0F213C-17E1-4149-88C8-8B50FB4EC70E,0x7000,0x20000)/EFI/debian/grubaa64.efi",
+    L"VenHw(B549F005-4BD4-4020-A0CB-06F42BDA68C3)/HD(6,GPT,5C0F213C-17E1-4149-88C8-8B50FB4EC70E,0x7000,0x20000)/\\EFI\\DEBIAN\\GRUBAA64.EFI",
     NULL,
     L"grub on eMMC",
     LOAD_OPTION_CATEGORY_APP
   },
-  [HIKEY_BOOT_ENTRY_GRUB_SD] = {
-    L"VenHw(594BFE73-5E18-4F12-8119-19DB8C5FC849)/HD(1,MBR,0x00000000,0x3F,0x21FC0)/grubaa64.efi",
-    NULL,
-    L"grub on SD",
-    LOAD_OPTION_CATEGORY_APP
+  [HIKEY_BOOT_ENTRY_BOOT_SD] = {
+    L"VenHw(594BFE73-5E18-4F12-8119-19DB8C5FC849)/HD(1,MBR,0x00000000,0x3F,0x21FC0)/Image",
+    L"dtb=hi6220-hikey.dtb console=ttyAMA3,115200 earlycon=pl011,0xf7113000 root=/dev/mmcblk1p2 rw rootwait initrd=initrd.img efi=noruntime",
+    L"boot from SD without grub",
+    LOAD_OPTION_CATEGORY_BOOT
   }
 };
 
@@ -409,6 +410,31 @@ HiKeyDetectJumper (
 }
 
 STATIC
+BOOLEAN
+EFIAPI
+HiKeySDCardIsPresent (
+  IN      VOID
+  )
+{
+  UINT32    Value;
+
+  /*
+   * FIXME
+   * At first, reading GPIO pin shouldn't exist in SD driver. We need to
+   * add some callbacks to handle settings for hardware platform.
+   * In the second, reading GPIO pin should be based on GPIO driver. Now
+   * GPIO driver could only be used for one PL061 gpio controller. And it's
+   * used to detect jumper setting. As a workaround, we have to read the gpio
+   * register instead at here.
+   *
+   */
+  Value = MmioRead32 (0xf8012000 + (1 << 2));
+  if (Value)
+    return FALSE;
+  return TRUE;
+}
+
+STATIC
 VOID
 EFIAPI
 HiKeyCreateFdtVariable (
@@ -452,7 +478,6 @@ HiKeyOnEndOfDxe (
   EFI_STATUS          Status;
   UINTN               VariableSize;
   UINT16              AutoBoot, Count, Index;
-  CHAR16              BootDevice[BOOT_DEVICE_LENGTH];
 
   VariableSize = sizeof (UINT16);
   Status = gRT->GetVariable (
@@ -516,23 +541,9 @@ HiKeyOnEndOfDxe (
   HiKeyDetectJumper ();
 
   if (mBootIndex > 0) {
-    VariableSize = BOOT_DEVICE_LENGTH * sizeof (UINT16);
-    Status = gRT->GetVariable (
-                    (CHAR16 *)L"HiKeyBootDevice",
-                    &gArmGlobalVariableGuid,
-                    NULL,
-                    &VariableSize,
-                    &BootDevice
-                    );
-     if (EFI_ERROR (Status) == 0) {
-       if (StrnCmp (BootDevice, L"emmc", StrLen (L"emmc")) == 0) {
-         mBootIndex = HIKEY_BOOT_ENTRY_GRUB_EMMC;
-       } else if (StrnCmp (BootDevice, L"sd", StrLen (L"sd")) == 0) {
-         mBootIndex = HIKEY_BOOT_ENTRY_GRUB_SD;
-       } else {
-         DEBUG ((EFI_D_ERROR, "%a: invalid boot device (%a) is specified\n", __func__, BootDevice));
-         mBootIndex = HIKEY_BOOT_ENTRY_GRUB_EMMC;
-       }
+     // If SD card is present, boot from SD card directly.
+     if (HiKeySDCardIsPresent () == TRUE) {
+       mBootIndex = HIKEY_BOOT_ENTRY_BOOT_SD;
      } else {
        mBootIndex = HIKEY_BOOT_ENTRY_GRUB_EMMC;
      }
@@ -544,7 +555,7 @@ HiKeyOnEndOfDxe (
   case HIKEY_BOOT_ENTRY_GRUB_EMMC:
     HiKeyCreateFdtVariable (L"VenHw(B549F005-4BD4-4020-A0CB-06F42BDA68C3)/HD(6,GPT,5C0F213C-17E1-4149-88C8-8B50FB4EC70E,0x7000,0x20000)/hi6220-hikey.dtb");
     break;
-  case HIKEY_BOOT_ENTRY_GRUB_SD:
+  case HIKEY_BOOT_ENTRY_BOOT_SD:
     HiKeyCreateFdtVariable (L"VenHw(594BFE73-5E18-4F12-8119-19DB8C5FC849)/HD(1,MBR,0x00000000,0x3F,0x21FC0)/hi6220-hikey.dtb");
     break;
   }
