@@ -56,8 +56,8 @@ STATIC UINT16 mBootCount = 0;
 STATIC UINT16 mBootIndex = 0;
 
 #define HIKEY_BOOT_ENTRY_FASTBOOT          0
-#define HIKEY_BOOT_ENTRY_GRUB_EMMC         1    /* boot eMMC with grub */
-#define HIKEY_BOOT_ENTRY_BOOT_SD           2    /* boot SD without grub */
+#define HIKEY_BOOT_ENTRY_BOOT_EMMC         1    /* boot from eMMC */
+#define HIKEY_BOOT_ENTRY_BOOT_SD           2    /* boot from SD card */
 
 STATIC struct HiKeyBootEntry Entries[] = {
   [HIKEY_BOOT_ENTRY_FASTBOOT] = {
@@ -66,16 +66,16 @@ STATIC struct HiKeyBootEntry Entries[] = {
     L"fastboot",
     LOAD_OPTION_CATEGORY_APP
   },
-  [HIKEY_BOOT_ENTRY_GRUB_EMMC] = {
+  [HIKEY_BOOT_ENTRY_BOOT_EMMC] = {
     L"VenHw(B549F005-4BD4-4020-A0CB-06F42BDA68C3)/HD(6,GPT,5C0F213C-17E1-4149-88C8-8B50FB4EC70E,0x7000,0x20000)/\\EFI\\BOOT\\GRUBAA64.EFI",
     NULL,
-    L"grub on eMMC",
+    L"boot from eMMC",
     LOAD_OPTION_CATEGORY_APP
   },
   [HIKEY_BOOT_ENTRY_BOOT_SD] = {
     L"VenHw(594BFE73-5E18-4F12-8119-19DB8C5FC849)/HD(1,MBR,0x00000000,0x3F,0x21FC0)/Image",
     L"dtb=hi6220-hikey.dtb console=ttyAMA3,115200 earlycon=pl011,0xf7113000 root=/dev/mmcblk1p2 rw rootwait initrd=initrd.img efi=noruntime",
-    L"boot from SD without grub",
+    L"boot from SD card",
     LOAD_OPTION_CATEGORY_BOOT
   }
 };
@@ -545,14 +545,14 @@ HiKeyOnEndOfDxe (
      if (HiKeySDCardIsPresent () == TRUE) {
        mBootIndex = HIKEY_BOOT_ENTRY_BOOT_SD;
      } else {
-       mBootIndex = HIKEY_BOOT_ENTRY_GRUB_EMMC;
+       mBootIndex = HIKEY_BOOT_ENTRY_BOOT_EMMC;
      }
   }
 
   // Fdt variable should be aligned with Image path.
   // In another word, Fdt and Image file should be located in the same path.
   switch (mBootIndex) {
-  case HIKEY_BOOT_ENTRY_GRUB_EMMC:
+  case HIKEY_BOOT_ENTRY_BOOT_EMMC:
     HiKeyCreateFdtVariable (L"VenHw(B549F005-4BD4-4020-A0CB-06F42BDA68C3)/HD(6,GPT,5C0F213C-17E1-4149-88C8-8B50FB4EC70E,0x7000,0x20000)/hi6220-hikey.dtb");
     break;
   case HIKEY_BOOT_ENTRY_BOOT_SD:
