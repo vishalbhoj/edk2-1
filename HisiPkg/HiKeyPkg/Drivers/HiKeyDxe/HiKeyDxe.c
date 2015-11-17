@@ -141,7 +141,7 @@ HiKeyInitBootDevice (
 {
   EFI_STATUS            Status;
   UINTN                 VariableSize;
-  CHAR16                DefaultBootDevice[] = L"emmc";
+  CHAR16                DefaultBootDevice[BOOT_DEVICE_LENGTH] = L"sd";
 
   VariableSize = BOOT_DEVICE_LENGTH * sizeof (CHAR16);
   Status = gRT->GetVariable (

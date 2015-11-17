@@ -478,6 +478,7 @@ HiKeyOnEndOfDxe (
   EFI_STATUS          Status;
   UINTN               VariableSize;
   UINT16              AutoBoot, Count, Index;
+  CHAR16              BootDevice[BOOT_DEVICE_LENGTH];
 
   VariableSize = sizeof (UINT16);
   Status = gRT->GetVariable (
@@ -540,13 +541,38 @@ HiKeyOnEndOfDxe (
 
   HiKeyDetectJumper ();
 
-  if (mBootIndex > 0) {
-     // If SD card is present, boot from SD card directly.
-     if (HiKeySDCardIsPresent () == TRUE) {
-       mBootIndex = HIKEY_BOOT_ENTRY_BOOT_SD;
-     } else {
-       mBootIndex = HIKEY_BOOT_ENTRY_BOOT_EMMC;
-     }
+  // Check boot device.
+  // If boot device is eMMC, it's always higher priority.
+  // If boot device is SD card, SD card is higher priority.
+  //    If SD card is present, boot SD. Otherwise, still boot eMMC.
+  VariableSize = BOOT_DEVICE_LENGTH * sizeof (UINT16);
+  Status = gRT->GetVariable (
+                  (CHAR16 *)L"HiKeyBootDevice",
+                  &gArmGlobalVariableGuid,
+                  NULL,
+                  &VariableSize,
+                  &BootDevice
+                  );
+  if (EFI_ERROR (Status) == 0) {
+    if (StrnCmp (BootDevice, L"emmc", StrLen (L"emmc")) == 0) {
+      if (mBootIndex > 0) {
+        mBootIndex = HIKEY_BOOT_ENTRY_BOOT_EMMC;
+      }
+    } else if (StrnCmp (BootDevice, L"sd", StrLen (L"sd")) == 0) {
+      if (mBootIndex > 0) {
+         // If SD card is present, boot from SD card directly.
+         if (HiKeySDCardIsPresent () == TRUE) {
+           mBootIndex = HIKEY_BOOT_ENTRY_BOOT_SD;
+         } else {
+           mBootIndex = HIKEY_BOOT_ENTRY_BOOT_EMMC;
+         }
+      }
+    } else {
+      DEBUG ((EFI_D_ERROR, "%a: invalid boot device (%a) is specified\n", __func__, BootDevice));
+      mBootIndex = HIKEY_BOOT_ENTRY_BOOT_EMMC;
+    }
+  } else {
+    DEBUG ((EFI_D_ERROR, "failed to get HiKeyBootDevice variable, %r\n", Status));
   }
 
   // Fdt variable should be aligned with Image path.
