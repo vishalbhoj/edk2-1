@@ -478,6 +478,7 @@ HiKeyOnEndOfDxe (
   EFI_STATUS          Status;
   UINTN               VariableSize;
   UINT16              AutoBoot, Count, Index;
+  CHAR16              BootDevice[BOOT_DEVICE_LENGTH];
 
   VariableSize = sizeof (UINT16);
   Status = gRT->GetVariable (
@@ -540,21 +541,44 @@ HiKeyOnEndOfDxe (
 
   HiKeyDetectJumper ();
 
-  if (mBootIndex > 0) {
-     // If SD card is present, boot from SD card directly.
-     if (HiKeySDCardIsPresent () == TRUE) {
-       mBootIndex = HIKEY_BOOT_ENTRY_BOOT_SD;
-     } else {
-       mBootIndex = HIKEY_BOOT_ENTRY_BOOT_EMMC;
-     }
+  // Check boot device.
+  // If boot device is eMMC, it's always higher priority.
+  // If boot device is SD card, SD card is higher priority.
+  //    If SD card is present, boot SD. Otherwise, still boot eMMC.
+  VariableSize = BOOT_DEVICE_LENGTH * sizeof (UINT16);
+  Status = gRT->GetVariable (
+                  (CHAR16 *)L"HiKeyBootDevice",
+                  &gArmGlobalVariableGuid,
+                  NULL,
+                  &VariableSize,
+                  &BootDevice
+                  );
+  if (EFI_ERROR (Status) == 0) {
+    if (StrnCmp (BootDevice, L"emmc", StrLen (L"emmc")) == 0) {
+      if (mBootIndex > 0) {
+        mBootIndex = HIKEY_BOOT_ENTRY_BOOT_EMMC;
+      }
+    } else if (StrnCmp (BootDevice, L"sd", StrLen (L"sd")) == 0) {
+      if (mBootIndex > 0) {
+         // If SD card is present, boot from SD card directly.
+         if (HiKeySDCardIsPresent () == TRUE) {
+           mBootIndex = HIKEY_BOOT_ENTRY_BOOT_SD;
+         } else {
+           mBootIndex = HIKEY_BOOT_ENTRY_BOOT_EMMC;
+         }
+      }
+    } else {
+      DEBUG ((EFI_D_ERROR, "%a: invalid boot device (%a) is specified\n", __func__, BootDevice));
+      mBootIndex = HIKEY_BOOT_ENTRY_BOOT_EMMC;
+    }
+  } else {
+    DEBUG ((EFI_D_ERROR, "failed to get HiKeyBootDevice variable, %r\n", Status));
   }
 
   // Fdt variable should be aligned with Image path.
   // In another word, Fdt and Image file should be located in the same path.
+  // Since grub is used for eMMC boot, don't need to assign Fdt and Image path.
   switch (mBootIndex) {
-  case HIKEY_BOOT_ENTRY_BOOT_EMMC:
-    HiKeyCreateFdtVariable (L"VenHw(B549F005-4BD4-4020-A0CB-06F42BDA68C3)/HD(6,GPT,5C0F213C-17E1-4149-88C8-8B50FB4EC70E,0x7000,0x20000)/hi6220-hikey.dtb");
-    break;
   case HIKEY_BOOT_ENTRY_BOOT_SD:
     HiKeyCreateFdtVariable (L"VenHw(594BFE73-5E18-4F12-8119-19DB8C5FC849)/HD(1,MBR,0x00000000,0x3F,0x21FC0)/hi6220-hikey.dtb");
     break;
