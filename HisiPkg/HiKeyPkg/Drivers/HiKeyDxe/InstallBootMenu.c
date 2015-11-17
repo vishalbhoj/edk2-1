@@ -577,10 +577,8 @@ HiKeyOnEndOfDxe (
 
   // Fdt variable should be aligned with Image path.
   // In another word, Fdt and Image file should be located in the same path.
+  // Since grub is used for eMMC boot, don't need to assign Fdt and Image path.
   switch (mBootIndex) {
-  case HIKEY_BOOT_ENTRY_BOOT_EMMC:
-    HiKeyCreateFdtVariable (L"VenHw(B549F005-4BD4-4020-A0CB-06F42BDA68C3)/HD(6,GPT,5C0F213C-17E1-4149-88C8-8B50FB4EC70E,0x7000,0x20000)/hi6220-hikey.dtb");
-    break;
   case HIKEY_BOOT_ENTRY_BOOT_SD:
     HiKeyCreateFdtVariable (L"VenHw(594BFE73-5E18-4F12-8119-19DB8C5FC849)/HD(1,MBR,0x00000000,0x3F,0x21FC0)/hi6220-hikey.dtb");
     break;
