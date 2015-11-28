@@ -321,32 +321,45 @@ HandleSetAddress (
   return EFI_SUCCESS;
 }
 
+int usb_drv_request_endpoint(unsigned int type, int dir)
+{
+  unsigned int ep = 1;    /*FIXME*/
+  int ret;
+  unsigned long newbits;
+  
+  ret = (int)ep | dir;
+  newbits = (type << 18) | 0x10000000;
+  
+  /*
+   * (type << 18):Endpoint Type (EPType)
+   * 0x10000000:Endpoint Enable (EPEna)
+   * 0x000C000:Endpoint Type (EPType);Hardcoded to 00 for control.
+   * (ep<<22):TxFIFO Number (TxFNum)
+   * 0x20000:NAK Status (NAKSts);The core is transmitting NAK handshakes on this endpoint.
+   */
+  if (dir) {  // IN: to host
+  	WRITE_REG32(DIEPCTL(ep), ((READ_REG32(DIEPCTL(ep)))& ~0x000C0000) | newbits | (ep<<22)|0x20000);
+  } else {    // OUT: to device
+  	WRITE_REG32(DOEPCTL(ep), ((READ_REG32(DOEPCTL(ep))) & ~0x000C0000) | newbits);
+  }
+  
+  return ret;
+}
 STATIC
 EFI_STATUS
 HandleSetConfiguration (
   IN USB_DEVICE_REQUEST  *Request
   )
 {
-  USB_ENDPOINT_DESCRIPTOR  *EPDesc;
-  UINTN                     Index;
-  UINT8                     ep;
-  UINT32 attr;
-
   ASSERT (Request->RequestType == USB_DEV_SET_CONFIGURATION_REQ_TYPE);
 
-  // Configure endpoints
-  for (Index = 0; Index < mInterfaceDescriptor->NumEndpoints; Index++) {
-    EPDesc = &mEndpointDescriptors[Index];
-    ep = EPDesc->EndpointAddress & 0xF;
-    attr = (EPDesc->Attributes << 18) | 0x10000000;
+  // Cancel all transfers
+  reset_endpoints();
 
-    if (EPDesc->EndpointAddress & BIT7) {
-        WRITE_REG32(DIEPCTL(ep), (((READ_REG32(DIEPCTL(ep))) & ~0x000C0000) |
-		    attr | (ep<<22)|0x20000));
-    } else {
-        WRITE_REG32(DOEPCTL(ep), (((READ_REG32(DOEPCTL(ep))) & ~0x000C0000) | attr));
-    }
-  }
+  usb_drv_request_endpoint(2, 0);
+  usb_drv_request_endpoint(2, 0x80);
+
+  WRITE_REG32(DIEPCTL1, (READ_REG32(DIEPCTL1)) | 0x10088800);
 
   /* Enable interrupts on all endpoints */
   WRITE_REG32(DAINTMSK, 0xFFFFFFFF);
