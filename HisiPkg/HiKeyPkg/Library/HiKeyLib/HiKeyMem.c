@@ -37,6 +37,7 @@ STATIC struct HiKeyReservedMemory {
   EFI_PHYSICAL_ADDRESS         Size;
 } HiKeyReservedMemoryBuffer [] = {
   { 0x05E00000, 0x00100000 },    // MCU
+  { 0x05F01000, 0x00001000 },    // ADB REBOOT "REASON"
   { 0x06DFF000, 0x00001000 },    // MAILBOX
   { 0x0740F000, 0x00001000 },    // MAILBOX
   { 0x3E000000, 0x02000000 }     // TEE OS

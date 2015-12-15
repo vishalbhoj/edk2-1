@@ -375,6 +375,31 @@ HiKeyTestLed (
   }
 }
 
+
+#define REBOOT_REASON_ADDR		0x05F01000
+#define REBOOT_REASON_BOOTLOADER	0x77665500
+#define REBOOT_REASON_NONE		0x77665501
+STATIC
+VOID
+EFIAPI
+HiKeyDetectRebootReason (
+  IN     VOID
+  )
+{
+   UINT32 *addr = (UINT32*)REBOOT_REASON_ADDR;
+   UINT32  val;
+
+   val = *addr;
+   /* Check to see if "reboot booloader" was specified */
+   if (val == REBOOT_REASON_BOOTLOADER) {
+     mBootIndex = 0;
+   }
+   /* Write NONE to the reason address to clear the state */
+   *addr = REBOOT_REASON_NONE;
+
+   return;
+}
+
 STATIC
 VOID
 EFIAPI
@@ -540,6 +565,7 @@ HiKeyOnEndOfDxe (
   }
 
   HiKeyDetectJumper ();
+  HiKeyDetectRebootReason ();
 
   // Check boot device.
   // If boot device is eMMC, it's always higher priority.
