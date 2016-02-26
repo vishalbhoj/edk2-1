@@ -48,6 +48,9 @@
 #define SERIAL_NUMBER_LENGTH      16
 #define BOOT_DEVICE_LENGTH        16
 
+#define HIKEY_ERASE_SIZE          (32 * 1024 * 1024)
+#define HIKEY_ERASE_BLOCKS        (HIKEY_ERASE_SIZE / EFI_PAGE_SIZE)
+
 typedef struct _FASTBOOT_PARTITION_LIST {
   LIST_ENTRY  Link;
   CHAR16      PartitionName[PARTITION_NAME_MAX_LENGTH];
@@ -543,11 +546,11 @@ HiKeyFastbootPlatformErasePartition (
   EFI_DISK_IO_PROTOCOL    *DiskIo;
   UINT32                   MediaId;
   UINT64                   Offset;
-  UINTN                    PartitionSize;
+  UINTN                    PartitionSize, ErasePageCount, EraseSize;
   FASTBOOT_PARTITION_LIST *Entry;
   CHAR16                   PartitionNameUnicode[60];
   BOOLEAN                  PartitionFound;
-  CHAR8                    Buffer[EFI_PAGE_SIZE];
+  CHAR8                    *Buffer;
 
   AsciiStrToUnicodeStr (PartitionName, PartitionNameUnicode);
 
@@ -596,16 +599,33 @@ HiKeyFastbootPlatformErasePartition (
     // partition table (GPT) cost 34 blocks
     PartitionSize = 34 * BlockIo->Media->BlockSize;
   }
+  if (PartitionSize > HIKEY_ERASE_SIZE) {
+    ErasePageCount = HIKEY_ERASE_BLOCKS;
+    EraseSize = ErasePageCount * EFI_PAGE_SIZE;
+  } else {
+    ErasePageCount = (PartitionSize + EFI_PAGE_SIZE - 1) / EFI_PAGE_SIZE;
+    EraseSize = ErasePageCount * EFI_PAGE_SIZE;
+  }
+  Buffer = (CHAR8 *)AllocatePages (ErasePageCount);
+  if (Buffer == NULL)
+    return EFI_BUFFER_TOO_SMALL;
+  SetMem (Buffer, EraseSize, 0xff);
 
-  SetMem (Buffer, EFI_PAGE_SIZE, 0xff);
-  for (Offset = 0; Offset < PartitionSize; Offset += BlockIo->Media->BlockSize) {
-    Status = DiskIo->WriteDisk (DiskIo, MediaId, Offset, BlockIo->Media->BlockSize, (VOID *)&Buffer);
+  for (Offset = 0; Offset < PartitionSize; Offset += EraseSize) {
+    /* Check if it's the last erase region in the partition. */
+    if (Offset + EraseSize > PartitionSize) {
+      Status = DiskIo->WriteDisk (DiskIo, MediaId, Offset, PartitionSize - Offset, (VOID *)Buffer);
+    } else {
+      Status = DiskIo->WriteDisk (DiskIo, MediaId, Offset, EraseSize, (VOID *)Buffer);
+    }
     if (EFI_ERROR (Status)) {
       DEBUG ((EFI_D_ERROR, "%a: Fail to erase at address 0x%x\n", __func__, Offset));
-      return Status;
+      goto out;
     }
   }
-  return EFI_SUCCESS;
+out:
+  FreePages (Buffer, ErasePageCount);
+  return Status;
 }
 
 EFI_STATUS
@@ -614,13 +634,64 @@ HiKeyFastbootPlatformGetVar (
   OUT CHAR8   *Value
   )
 {
+  EFI_STATUS               Status;
+  EFI_BLOCK_IO_PROTOCOL   *BlockIo;
+  UINT64                    PartitionSize;
+  FASTBOOT_PARTITION_LIST *Entry;
+  CHAR16                   PartitionNameUnicode[60];
+  BOOLEAN                  PartitionFound;
+
   if (!AsciiStrCmp (Name, "max-download-size")) {
     AsciiStrCpy (Value, FixedPcdGetPtr (PcdArmFastbootFlashLimit));
-  } else if (AsciiStrCmp (Name, "product")) {
+  } else if (!AsciiStrCmp (Name, "product")) {
     AsciiStrCpy (Value, FixedPcdGetPtr (PcdFirmwareVendor));
-  } else {
-    *Value = '\0';
-  }
+  } else if ( !AsciiStrnCmp (Name, "partition-size", 14)) {
+    AsciiStrToUnicodeStr ((Name + 15), PartitionNameUnicode);
+    PartitionFound = FALSE;
+    Entry = (FASTBOOT_PARTITION_LIST *) GetFirstNode (&(mPartitionListHead));
+    while (!IsNull (&mPartitionListHead, &Entry->Link)) {
+      // Search the partition list for the partition named by PartitionName
+      if (StrCmp (Entry->PartitionName, PartitionNameUnicode) == 0) {
+        PartitionFound = TRUE;
+        break;
+      }
+
+     Entry = (FASTBOOT_PARTITION_LIST *) GetNextNode (&mPartitionListHead, &(Entry)->Link);
+    }
+    if (!PartitionFound) {
+      *Value = '\0';
+      return EFI_NOT_FOUND;
+    }
+
+    Status = gBS->OpenProtocol (
+                    Entry->PartitionHandle,
+                    &gEfiBlockIoProtocolGuid,
+                    (VOID **) &BlockIo,
+                    gImageHandle,
+                    NULL,
+                    EFI_OPEN_PROTOCOL_GET_PROTOCOL
+                    );
+    if (EFI_ERROR (Status)) {
+      DEBUG ((EFI_D_ERROR, "Fastboot platform: couldn't open Block IO for flash: %r\n", Status));
+      *Value = '\0';
+      return EFI_NOT_FOUND;
+    }
+
+    PartitionSize = (BlockIo->Media->LastBlock + 1) * BlockIo->Media->BlockSize;
+    DEBUG ((EFI_D_ERROR, "Fastboot platform: check for partition-size:%a 0X%llx\n", Name, PartitionSize ));
+    AsciiSPrint (Value, 12, "0x%llx", PartitionSize);
+    } else if ( !AsciiStrnCmp (Name, "partition-type", 14)) {
+      DEBUG ((EFI_D_ERROR, "Fastboot platform: check for partition-type:%a\n", (Name + 15) ));
+    if ( !AsciiStrnCmp  ( (Name + 15) , "system", 6) || !AsciiStrnCmp  ( (Name + 15) , "userdata", 8)
+            || !AsciiStrnCmp  ( (Name + 15) , "cache", 5)) {
+      AsciiStrCpy (Value, "ext4");
+    }
+    else
+      AsciiStrCpy (Value, "raw");
+    } else {
+      *Value = '\0';
+    }
+
   return EFI_SUCCESS;
 }
 
